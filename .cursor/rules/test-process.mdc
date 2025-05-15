@@ -1,0 +1,89 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Test Code Structure and Guidelines
+
+## Test File Organization
+모든 테스트 파일은 `test` 디렉토리 아래에 위치합니다. E2E 테스트는 `*.e2e.spec.ts` 형식으로, 단위 테스트는 `*.spec.ts` 형식으로 명명합니다.
+
+주요 테스트 파일:
+- [jest-e2e.json](mdc:test/jest-e2e.json): E2E 테스트 설정
+- [test-mysql.module.ts](mdc:test/test-mysql.module.ts): 테스트용 MySQL 연결 설정
+
+## Test Fixtures
+`test/fixture` 디렉토리에는 테스트에 필요한 데이터를 생성하는 픽스처 클래스가 있습니다.
+예시: [product.fixture.ts](mdc:test/fixture/product.fixture.ts)
+
+## E2E Test Pattern
+E2E 테스트는 API 엔드포인트를 테스트하며 다음 구조를 따릅니다:
+```typescript
+describe('[Controller] (e2e)', () => {
+  let app: INestApplication;
+  
+  beforeAll(async () => {
+    // 테스트 애플리케이션 설정
+  });
+  
+  beforeEach(async () => {
+    // 데이터베이스 초기화
+  });
+  
+  afterAll(async () => {
+    await app.close();
+  });
+  
+  describe('[HTTP method] [endpoint]', () => {
+    it('[기대 동작 설명]', async () => {
+      // 테스트 코드
+    });
+  });
+});
+```
+
+예시: [order.e2e.spec.ts](mdc:test/order/order.e2e.spec.ts)
+
+## Unit Test Pattern
+서비스, 리포지토리 등 개별 컴포넌트의 단위 테스트 구조:
+```typescript
+describe('[Service/Repository]', () => {
+  let sut: ServiceType;
+  
+  beforeAll(async () => {
+    // 테스트 모듈 및 의존성 설정
+  });
+  
+  beforeEach(async () => {
+    // 테스트 데이터 초기화
+  });
+  
+  describe('[메소드명]', () => {
+    it('[기대 동작 설명]', async () => {
+      // 테스트 코드
+    });
+  });
+});
+```
+
+예시: [user.service.spec.ts](mdc:test/user/service/user.service.spec.ts)
+
+## Test Database Setting
+테스트에서는 `TestMySQLModule`을 사용하여 테스트용 데이터베이스를 설정합니다.
+각 테스트 전에 관련 리포지토리의 `clear()` 메소드를 호출해 테스트 격리를 보장합니다.
+
+## Must
+- 각 테스트 본문은 given, when, then 순서로 작성한다.
+- 숫자는 3자리마다 언더스코어(_)를 삽입해 가독성을 높인다.
+
+## Process
+
+테스트코드를 작성하는 경우, 항상 아래 순서를 따른다.
+
+1. `test` 디렉토리 하위에, 기능에 따라 테스트 파일의 도메인폴더를 결정한다. (e.g. `test/user`, `test/order`)
+2. 단위 테스트는 도메인폴더 내 `service`, `repository` 등 하위 폴더에 배치한다. E2E 테스트는 도메인 폴더 최상위에 배치한다.
+3. 테스트 파일이 없는 경우 생성한다.
+4. `test/fixture`에서 필요한 픽스쳐의 존재 여부를 확인하고, 없는 경우 새로 생성한다.
+5. 예시 코드를 참고하여 테스트코드를 작성한다. [user.service.spec.ts](mdc:test/user/service/user.service.spec.ts), [order.e2e.spec.ts](mdc:test/order/order.e2e.spec.ts)
+6. `npm run test:cov` 명령어로 테스트를 실행한다. 실패했거나 커버리지가 80%보다 낮은 경우 수정 후 재시도한다.
